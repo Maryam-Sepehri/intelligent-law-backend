@@ -2,23 +2,39 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
+const port = process.env.PORT || 5000;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Sample laws database (Replace with real DB later)
+// Sample law database (Replace with real database later)
 const laws = [
-  { id: 1, title: "Contract Law", description: "Laws related to contracts and agreements." },
-  { id: 2, title: "Property Law", description: "Laws governing property ownership and disputes." },
-  { id: 3, title: "Criminal Law", description: "Laws related to crimes and punishments." }
+  { id: 1, title: "Contract Law", description: "Legal agreements between parties." },
+  { id: 2, title: "Property Law", description: "Rights related to property ownership." },
+  { id: 3, title: "Criminal Law", description: "Offenses and punishments under law." },
 ];
 
-// Search API
+// Search endpoint
 app.get("/search", (req, res) => {
-  const query = req.query.q.toLowerCase();
-  const results = laws.filter(law => law.title.toLowerCase().includes(query));
-  res.json(results);
+  const query = req.query.q?.toLowerCase();
+  if (!query) {
+    return res.json({ laws: [] });
+  }
+
+  const results = laws.filter(
+    (law) => law.title.toLowerCase().includes(query) || law.description.toLowerCase().includes(query)
+  );
+
+  res.json({ laws: results });
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+// Root route
+app.get("/", (req, res) => {
+  res.send("Intelligent Law API is running!");
+});
+
+// Start server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
