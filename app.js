@@ -1,40 +1,48 @@
+const mongoose = require('mongoose');
+require('dotenv').config();  // Load environment variables
+
 const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const port = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// Sample law database (Replace with real database later)
-const laws = [
-  { id: 1, title: "Contract Law", description: "Legal agreements between parties." },
-  { id: 2, title: "Property Law", description: "Rights related to property ownership." },
-  { id: 3, title: "Criminal Law", description: "Offenses and punishments under law." },
-];
 
-// Search endpoint
-app.get("/search", (req, res) => {
-  const query = req.query.q?.toLowerCase();
-  if (!query) {
-    return res.json({ laws: [] });
-  }
 
-  const results = laws.filter(
-    (law) => law.title.toLowerCase().includes(query) || law.description.toLowerCase().includes(query)
-  );
-
-  res.json({ laws: results });
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('? Connected to MongoDB Atlas');
+}).catch(err => {
+    console.error('? MongoDB Connection Error:', err);
 });
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Intelligent Law API is running!");
+
+const LawSchema = new mongoose.Schema({
+    title: String,
+    content: String,
+    category: String
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+const LawModel = mongoose.model("CommonLaw", LawSchema);
+
+app.get("/search", async (req, res) => {
+    const query = req.query.q;
+    if (!query) return res.status(400).json({ error: "Query parameter missing" });
+
+    try {
+        const results = await LawModel.find({ content: { $regex: query, $options: "i" } });
+        if (results.length === 0) {
+            return res.json({ message: "No results found" });
+        }
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.listen(5000, () => {
+    console.log("? Server running on port 5000");
 });
