@@ -4,28 +4,24 @@ const { MongoClient } = require("mongodb");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+app.use(cors()); // Enable frontend communication
+app.use(express.json()); // Enable JSON request parsing
 
-// ? Middleware
-app.use(cors()); // Allow frontend requests
-app.use(express.json()); // Parse JSON request bodies
-
-// ? Connect to MongoDB
-const uri = process.env.MONGO_URI; // MongoDB connection string from .env
+// ? MongoDB Connection
+const uri = process.env.MONGO_URI; // Get the connection string from .env
 const client = new MongoClient(uri);
 let db;
 
 async function connectDB() {
     try {
         await client.connect();
-        db = client.db("intelligentLawDB"); // Replace with your database name
+        db = client.db("intelligentLawDB"); // Replace with your actual database name
         console.log("? Connected to MongoDB");
     } catch (error) {
         console.error("? MongoDB connection failed:", error);
         process.exit(1);
     }
 }
-
 connectDB(); // Call database connection function
 
 // ? Search API
@@ -62,7 +58,4 @@ app.get("/test-db", async (req, res) => {
     }
 });
 
-// ? Start Server
-app.listen(PORT, () => {
-    console.log(`?? Server running on port ${PORT}`);
-});
+module.exports = app; // Export the app for server.js
